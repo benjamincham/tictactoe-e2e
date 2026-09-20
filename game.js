@@ -16,8 +16,26 @@ const EMPTY = '';
 const PLAYERS = ['X', 'O'];
 
 /**
+ * The eight winning lines: three rows, three columns, two diagonals. Each line
+ * holds the three cell indexes that must carry the same non-empty mark.
+ *
+ * @const {ReadonlyArray<readonly [number, number, number]>}
+ */
+const WIN_LINES = [
+  [0, 1, 2],
+  [3, 4, 5],
+  [6, 7, 8],
+  [0, 3, 6],
+  [1, 4, 7],
+  [2, 5, 8],
+  [0, 4, 8],
+  [2, 4, 6],
+];
+
+/**
  * @typedef {''|'X'|'O'} Cell
  * @typedef {Cell[]} Board A 9-element array indexed 0..8, row by row.
+ * @typedef {'X'|'O'|'draw'} GameResult A finished game's outcome.
  */
 
 /**
@@ -63,6 +81,36 @@ function placeMove(board, i, player) {
   return next;
 }
 
+/**
+ * Report the outcome of a board (F4).
+ *
+ * The eight winning lines are checked first, so a line completed on a full
+ * board is reported as a win rather than a draw. When no line is complete, a
+ * board with no empty cell left is a draw and anything else is still in
+ * progress. A malformed board has no outcome worth reporting, so it is treated
+ * like `placeMove` treats a malformed move: rejected with `null`.
+ *
+ * @param {Board} board Board to inspect. Not mutated.
+ * @returns {GameResult|null} `'X'` or `'O'` for the player holding a complete
+ *   line, `'draw'` for a full board with no winner, or `null` while the game
+ *   is still in progress (or the board is malformed).
+ */
+function checkWinner(board) {
+  if (!Array.isArray(board) || board.length !== BOARD_SIZE) {
+    return null;
+  }
+
+  for (const [a, b, c] of WIN_LINES) {
+    const mark = board[a];
+    if (mark !== EMPTY && mark === board[b] && mark === board[c]) {
+      return mark;
+    }
+  }
+
+  const isFull = board.every((cell) => cell !== EMPTY);
+  return isFull ? 'draw' : null;
+}
+
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { BOARD_SIZE, EMPTY, PLAYERS, newBoard, placeMove };
+  module.exports = { BOARD_SIZE, EMPTY, PLAYERS, WIN_LINES, newBoard, placeMove, checkWinner };
 }

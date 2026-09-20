@@ -1,18 +1,16 @@
 /**
  * @file main.js — DOM wiring for tic-tac-toe.
  *
- * Implements F1 (board rendering) and F2 (human move): the 3×3 grid shipped in
- * `index.html` is kept in sync with the board held here, and clicking an empty
- * cell places the human's `X`. Clicking an occupied cell does nothing.
+ * Implements F1 (board rendering), F2 (human move) and F3 (computer opponent):
+ * the 3×3 grid shipped in `index.html` is kept in sync with the board held
+ * here, clicking an empty cell places the human's `X`, and the computer then
+ * answers with `O` on its own. Clicking an occupied cell does nothing.
  *
  * All rules live in `game.js`; this file only translates between DOM and state.
  */
 
 (function () {
   'use strict';
-
-  /** The human player's mark. */
-  const HUMAN = 'X';
 
   /** @type {Board} Current game state. */
   let board = newBoard();
@@ -51,7 +49,32 @@
   }
 
   /**
-   * Handle a click on a cell (F2): place `X` on empty cells only.
+   * Answer the human's move with the computer's `O` (F3).
+   *
+   * Called only once the human move has been applied and rendered, so `O`
+   * never appears before `X`. `bestMove` returns `null` when the board is full
+   * or already decided, which is the signal to stop replying.
+   *
+   * @returns {void}
+   */
+  function playComputerMove() {
+    const i = bestMove(board);
+    if (i === null) {
+      return;
+    }
+
+    const next = placeMove(board, i, COMPUTER);
+    if (next === null) {
+      return;
+    }
+
+    board = next;
+    render();
+  }
+
+  /**
+   * Handle a click on a cell: place the human's `X` (F2), then let the
+   * computer reply (F3).
    *
    * @param {MouseEvent} event Click event from a cell element.
    * @returns {void}
@@ -70,6 +93,8 @@
 
     board = next;
     render();
+
+    playComputerMove();
   }
 
   cells.forEach((cell) => cell.addEventListener('click', onCellClick));

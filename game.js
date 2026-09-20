@@ -15,6 +15,29 @@ const EMPTY = '';
 /** @const {ReadonlyArray<'X'|'O'>} The two players. */
 const PLAYERS = ['X', 'O'];
 
+/** @const {'X'} Mark played by the human. */
+const HUMAN = 'X';
+
+/** @const {'O'} Mark played by the computer. */
+const COMPUTER = 'O';
+
+/**
+ * The eight winning lines, as triples of cell indexes: three rows, three
+ * columns, two diagonals.
+ *
+ * @const {ReadonlyArray<[number, number, number]>}
+ */
+const WIN_LINES = [
+  [0, 1, 2],
+  [3, 4, 5],
+  [6, 7, 8],
+  [0, 3, 6],
+  [1, 4, 7],
+  [2, 5, 8],
+  [0, 4, 8],
+  [2, 4, 6],
+];
+
 /**
  * @typedef {''|'X'|'O'} Cell
  * @typedef {Cell[]} Board A 9-element array indexed 0..8, row by row.
@@ -63,6 +86,123 @@ function placeMove(board, i, player) {
   return next;
 }
 
+/**
+ * Report the winner of a position, if it is already decided.
+ *
+ * Internal to `bestMove`; the player-facing result banner is F4's job.
+ *
+ * @param {Board} board Position to inspect.
+ * @returns {'X'|'O'|null} The mark holding a complete line, else `null`.
+ */
+function winnerOf(board) {
+  for (const [a, b, c] of WIN_LINES) {
+    if (board[a] !== EMPTY && board[a] === board[b] && board[a] === board[c]) {
+      return board[a];
+    }
+  }
+  return null;
+}
+
+/**
+ * @param {Board} board Position to inspect.
+ * @returns {boolean} `true` when no empty cell is left.
+ */
+function isFull(board) {
+  return board.every((cell) => cell !== EMPTY);
+}
+
+/**
+ * Score a position for the computer with minimax.
+ *
+ * Terminal scores are depth adjusted (`10 - depth` for a computer win,
+ * `depth - 10` for a human win) so the computer prefers the win that arrives
+ * soonest and the loss that arrives latest. Without that tiebreak it would be
+ * indifferent between blocking now and losing a move later.
+ *
+ * @param {Board} board Position to score; decided positions are legal input.
+ * @param {'X'|'O'} player Player to move in this position.
+ * @param {number} depth Marks already placed, used to prefer faster outcomes.
+ * @returns {number} Score from the computer's point of view, in `-9..9`.
+ */
+function minimax(board, player, depth) {
+  const winner = winnerOf(board);
+  if (winner === COMPUTER) {
+    return 10 - depth;
+  }
+  if (winner === HUMAN) {
+    return depth - 10;
+  }
+  if (isFull(board)) {
+    return 0;
+  }
+
+  const opponent = player === COMPUTER ? HUMAN : COMPUTER;
+  let best = player === COMPUTER ? -Infinity : Infinity;
+
+  for (let i = 0; i < BOARD_SIZE; i += 1) {
+    if (board[i] !== EMPTY) {
+      continue;
+    }
+    const next = board.slice();
+    next[i] = player;
+    const score = minimax(next, opponent, depth + 1);
+    best = player === COMPUTER ? Math.max(best, score) : Math.min(best, score);
+  }
+
+  return best;
+}
+
+/**
+ * Pick the computer's move for a position (F3): plain minimax over the whole
+ * remaining game tree, so `O` never loses a game it can draw and never misses
+ * a win.
+ *
+ * Cells are scanned in index order and only a strictly better score replaces
+ * the current choice, so equal-valued moves always resolve to the lowest
+ * index — the result is deterministic rather than dependent on search order.
+ * Only empty cells are ever considered, so the returned index is always
+ * playable through `placeMove`.
+ *
+ * @param {Board} board Position with `O` to move.
+ * @returns {number|null} An empty cell index `0..8`, or `null` when the board
+ *   is malformed or the game is already over.
+ */
+function bestMove(board) {
+  if (!Array.isArray(board) || board.length !== BOARD_SIZE) {
+    return null;
+  }
+  if (winnerOf(board) !== null || isFull(board)) {
+    return null;
+  }
+
+  let best = null;
+  let bestScore = -Infinity;
+
+  for (let i = 0; i < BOARD_SIZE; i += 1) {
+    if (board[i] !== EMPTY) {
+      continue;
+    }
+    const next = board.slice();
+    next[i] = COMPUTER;
+    const score = minimax(next, HUMAN, 1);
+    if (score > bestScore) {
+      bestScore = score;
+      best = i;
+    }
+  }
+
+  return best;
+}
+
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { BOARD_SIZE, EMPTY, PLAYERS, newBoard, placeMove };
+  module.exports = {
+    BOARD_SIZE,
+    EMPTY,
+    PLAYERS,
+    HUMAN,
+    COMPUTER,
+    newBoard,
+    placeMove,
+    bestMove,
+  };
 }

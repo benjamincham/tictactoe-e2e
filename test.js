@@ -8,7 +8,7 @@
 'use strict';
 
 const assert = require('node:assert/strict');
-const { newBoard, placeMove } = require('./game.js');
+const { newBoard, placeMove, resetGame } = require('./game.js');
 
 let passed = 0;
 
@@ -90,6 +90,39 @@ test('every cell of an empty board is playable', () => {
     assert.notEqual(board, null, `index ${i} should be playable`);
     assert.equal(board[i], 'X');
   }
+});
+
+// --- resetGame (F5 restart) -------------------------------------------------
+
+test('resetGame returns nine empty cells', () => {
+  assert.equal(resetGame().length, 9);
+  assert.deepEqual(resetGame(), ['', '', '', '', '', '', '', '', '']);
+});
+
+test('resetGame clears a board that was played on', () => {
+  const played = placeMove(placeMove(newBoard(), 4, 'X'), 0, 'O');
+  assert.deepEqual(played, ['O', '', '', '', 'X', '', '', '', '']);
+
+  assert.deepEqual(resetGame(), newBoard());
+  assert.deepEqual(played, ['O', '', '', '', 'X', '', '', '', '']);
+});
+
+test('resetGame returns a fresh array every restart', () => {
+  const first = resetGame();
+  const second = resetGame();
+  assert.notEqual(first, second);
+  first[0] = 'X';
+  assert.deepEqual(second, newBoard());
+});
+
+test('every cell is playable again after a restart', () => {
+  const restarted = resetGame();
+  for (let i = 0; i < 9; i += 1) {
+    const board = placeMove(restarted, i, 'X');
+    assert.notEqual(board, null, `index ${i} should be playable after restart`);
+    assert.equal(board[i], 'X');
+  }
+  assert.deepEqual(restarted, newBoard());
 });
 
 console.log(`\n${passed} tests passed`);

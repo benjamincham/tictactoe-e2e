@@ -1,9 +1,10 @@
 /**
  * @file main.js — DOM wiring for tic-tac-toe.
  *
- * Implements F1 (board rendering) and F2 (human move): the 3×3 grid shipped in
- * `index.html` is kept in sync with the board held here, and clicking an empty
- * cell places the human's `X`. Clicking an occupied cell does nothing.
+ * Implements F1 (board rendering), F2 (human move) and F5 (restart): the 3×3
+ * grid shipped in `index.html` is kept in sync with the board held here,
+ * clicking an empty cell places the human's `X`, and the Restart button clears
+ * the board and the result banner at any point in the game.
  *
  * All rules live in `game.js`; this file only translates between DOM and state.
  */
@@ -21,6 +22,12 @@
 
   /** @type {HTMLElement[]} The nine cell elements, in board order (index 0..8). */
   const cells = Array.from(boardEl.querySelectorAll('.cell'));
+
+  /** The result banner that announces a win or a draw. */
+  const bannerEl = document.getElementById('banner');
+
+  /** The Restart button. */
+  const restartEl = document.getElementById('restart');
 
   /**
    * Build the accessible name for a cell.
@@ -72,7 +79,35 @@
     render();
   }
 
+  /**
+   * Clear the result banner (F5).
+   *
+   * The text is emptied as well as hidden, so a stale announcement can never be
+   * re-read by a screen reader when the next game ends.
+   *
+   * @returns {void}
+   */
+  function hideBanner() {
+    bannerEl.textContent = '';
+    bannerEl.hidden = true;
+  }
+
+  /**
+   * Handle a click on Restart (F5): start a new game from scratch.
+   *
+   * Works mid-game and after a win or draw, because it replaces the whole board
+   * rather than undoing moves one at a time.
+   *
+   * @returns {void}
+   */
+  function onRestartClick() {
+    board = resetGame();
+    hideBanner();
+    render();
+  }
+
   cells.forEach((cell) => cell.addEventListener('click', onCellClick));
+  restartEl.addEventListener('click', onRestartClick);
 
   render();
 })();

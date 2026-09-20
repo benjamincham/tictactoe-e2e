@@ -63,6 +63,20 @@ function placeMove(board, i, player) {
   return next;
 }
 
+/**
+ * Reset the game to its starting state (F5 — restart).
+ *
+ * Restart lives here rather than in `main.js` so that "what a fresh game looks
+ * like" stays a pure, unit-testable rule next to the other board operations.
+ * The result is always a new array, so restarting can never alias or mutate the
+ * game it replaces.
+ *
+ * @returns {Board} A fresh board with all nine cells empty.
+ */
+function resetGame() {
+  return newBoard();
+}
+
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { BOARD_SIZE, EMPTY, PLAYERS, newBoard, placeMove };
+  module.exports = { BOARD_SIZE, EMPTY, PLAYERS, newBoard, placeMove, resetGame };
 }

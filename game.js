@@ -22,10 +22,10 @@ const HUMAN = 'X';
 const COMPUTER = 'O';
 
 /**
- * The eight winning lines, as triples of cell indexes: three rows, three
- * columns, two diagonals.
+ * The eight winning lines: three rows, three columns, two diagonals. Each line
+ * holds the three cell indexes that must carry the same non-empty mark.
  *
- * @const {ReadonlyArray<[number, number, number]>}
+ * @const {ReadonlyArray<readonly [number, number, number]>}
  */
 const WIN_LINES = [
   [0, 1, 2],
@@ -41,6 +41,7 @@ const WIN_LINES = [
 /**
  * @typedef {''|'X'|'O'} Cell
  * @typedef {Cell[]} Board A 9-element array indexed 0..8, row by row.
+ * @typedef {'X'|'O'|'draw'} GameResult A finished game's outcome.
  */
 
 /**
@@ -89,7 +90,8 @@ function placeMove(board, i, player) {
 /**
  * Report the winner of a position, if it is already decided.
  *
- * Internal to `bestMove`; the player-facing result banner is F4's job.
+ * Internal to `checkWinner` and `bestMove`; the player-facing result banner is
+ * F4's job.
  *
  * @param {Board} board Position to inspect.
  * @returns {'X'|'O'|null} The mark holding a complete line, else `null`.
@@ -109,6 +111,33 @@ function winnerOf(board) {
  */
 function isFull(board) {
   return board.every((cell) => cell !== EMPTY);
+}
+
+/**
+ * Report the outcome of a board (F4).
+ *
+ * The eight winning lines are checked first, so a line completed on a full
+ * board is reported as a win rather than a draw. When no line is complete, a
+ * board with no empty cell left is a draw and anything else is still in
+ * progress. A malformed board has no outcome worth reporting, so it is treated
+ * like `placeMove` treats a malformed move: rejected with `null`.
+ *
+ * @param {Board} board Board to inspect. Not mutated.
+ * @returns {GameResult|null} `'X'` or `'O'` for the player holding a complete
+ *   line, `'draw'` for a full board with no winner, or `null` while the game
+ *   is still in progress (or the board is malformed).
+ */
+function checkWinner(board) {
+  if (!Array.isArray(board) || board.length !== BOARD_SIZE) {
+    return null;
+  }
+
+  const winner = winnerOf(board);
+  if (winner !== null) {
+    return winner;
+  }
+
+  return isFull(board) ? 'draw' : null;
 }
 
 /**
@@ -201,8 +230,10 @@ if (typeof module !== 'undefined' && module.exports) {
     PLAYERS,
     HUMAN,
     COMPUTER,
+    WIN_LINES,
     newBoard,
     placeMove,
+    checkWinner,
     bestMove,
   };
 }

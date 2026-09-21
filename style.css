@@ -104,3 +104,10 @@ body {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
+
+.banner {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}

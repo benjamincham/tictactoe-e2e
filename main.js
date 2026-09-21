@@ -2,11 +2,19 @@
  * @file main.js — DOM wiring for tic-tac-toe.
  *
  * Implements F1 (board rendering), F2 (human move), F3 (computer opponent)
+<<<<<<< HEAD
  * and F5 (restart): the 3×3 grid shipped in `index.html` is kept in sync with
  * the board held here, clicking an empty cell places the human's `X`, the
  * computer then answers with `O` on its own, and the Restart button throws
  * the current game away at any point — mid-game or after it has ended.
  * Clicking an occupied cell does nothing.
+=======
+ * and F4 (win / draw detection): the 3×3 grid shipped in `index.html` is kept
+ * in sync with the board held here, clicking an empty cell places the human's
+ * `X`, the computer then answers with `O` on its own, and every move is
+ * followed by a winner check. Once the game ends the result is announced in a
+ * banner, the cells are disabled and further clicks are ignored.
+>>>>>>> origin/main
  *
  * All rules live in `game.js`; this file only translates between DOM and state.
  */
@@ -17,10 +25,16 @@
   /** @type {Board} Current game state. */
   let board = newBoard();
 
+  /** Whether the game has ended, so no further move may be played (F4). */
+  let gameOver = false;
+
   const boardEl = document.getElementById('board');
 
   /** @type {HTMLElement[]} The nine cell elements, in board order (index 0..8). */
   const cells = Array.from(boardEl.querySelectorAll('.cell'));
+
+  /** The result banner that announces a win or a draw. */
+  const bannerEl = document.getElementById('banner');
 
   /** The Restart button. */
   const restartEl = document.getElementById('restart');
@@ -41,6 +55,9 @@
   /**
    * Paint the current board onto the grid (F1).
    *
+   * Cells are disabled once the game is over, which both blocks further input
+   * and exposes the finished state to assistive technology (F4).
+   *
    * @returns {void}
    */
   function render() {
@@ -50,7 +67,29 @@
       cell.classList.toggle('cell--x', player === 'X');
       cell.classList.toggle('cell--o', player === 'O');
       cell.setAttribute('aria-label', labelFor(i, player));
+      cell.disabled = gameOver;
     });
+  }
+
+  /**
+   * Run the bookkeeping that follows every move (F4).
+   *
+   * This is the single place the finished-game check happens, so the human's
+   * move and the computer's reply share one path instead of each duplicating
+   * it. The banner is revealed before its text is written so the
+   * `role="status"` region is already exposed when the announcement lands.
+   *
+   * @returns {void}
+   */
+  function afterMove() {
+    const result = checkWinner(board);
+
+    if (result !== null) {
+      gameOver = true;
+      bannerEl.hidden = false;
+      bannerEl.textContent = result === 'draw' ? 'Draw!' : `${result} wins!`;
+      render();
+    }
   }
 
   /**
@@ -75,16 +114,24 @@
 
     board = next;
     render();
+    afterMove();
   }
 
   /**
-   * Handle a click on a cell: place the human's `X` (F2), then let the
-   * computer reply (F3).
+   * Handle a click on a cell: place the human's `X` (F2), check for a result,
+   * then let the computer reply (F3) — checked in turn (F4).
+   *
+   * Clicks are ignored once the game has ended, so a finished board can no
+   * longer be changed (F4).
    *
    * @param {MouseEvent} event Click event from a cell element.
    * @returns {void}
    */
   function onCellClick(event) {
+    if (gameOver) {
+      return;
+    }
+
     const i = Number(event.currentTarget.dataset.index);
 
     if (board[i] !== EMPTY) {
@@ -98,27 +145,11 @@
 
     board = next;
     render();
+    afterMove();
 
-    playComputerMove();
-  }
-
-  /**
-   * Hide the result banner (F5).
-   *
-   * The text is emptied as well as hidden, so a stale announcement can never
-   * be re-read by a screen reader after the next game ends. The banner element
-   * itself belongs to F4; until it exists this is a silent no-op, so `main.js`
-   * keeps working whether or not F4 has been merged.
-   *
-   * @returns {void}
-   */
-  function hideBanner() {
-    const bannerEl = document.getElementById('banner');
-    if (!bannerEl) {
-      return;
+    if (!gameOver) {
+      playComputerMove();
     }
-    bannerEl.textContent = '';
-    bannerEl.hidden = true;
   }
 
   /**
@@ -126,14 +157,18 @@
    *
    * Works mid-game and after a win or a draw, because the whole board is
    * replaced rather than moves being undone one at a time: `newBoard()` hands
-   * back a fresh array, the cells are repainted from it and the result banner
-   * is cleared.
+   * back a fresh array, `gameOver` is cleared so cells accept input again, the
+   * cells are repainted from it and the result banner is cleared. The banner
+   * text is emptied as well as hidden, so a stale announcement can never be
+   * re-read by a screen reader after the next game ends.
    *
    * @returns {void}
    */
   function onRestartClick() {
     board = newBoard();
-    hideBanner();
+    gameOver = false;
+    bannerEl.hidden = true;
+    bannerEl.textContent = '';
     render();
   }
 

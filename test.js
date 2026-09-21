@@ -8,7 +8,7 @@
 'use strict';
 
 const assert = require('node:assert/strict');
-const { EMPTY, newBoard, placeMove, bestMove } = require('./game.js');
+const { EMPTY, HUMAN, newBoard, placeMove, bestMove } = require('./game.js');
 
 let passed = 0;
 
@@ -260,6 +260,64 @@ test('bestMove never loses against every possible human strategy', () => {
   }
 
   assert.ok(games > 100, `expected a broad game tree, only explored ${games} games`);
+});
+
+// --- restart (F5) -----------------------------------------------------------
+
+/**
+ * Simulate the DOM bookkeeping `main.js` does for one human click: apply the
+ * move to a fresh board state and return it, the way `onCellClick` does.
+ *
+ * `main.js` cannot be imported from Node (it touches the DOM at import time),
+ * so the restart tests drive the same pure state transitions its handlers
+ * perform: play a few moves, then restart and assert the state is gone.
+ *
+ * @param {Board} board Board to play on.
+ * @param {number} i Cell index.
+ * @returns {Board} Board after the move.
+ */
+function clickCell(board, i) {
+  const next = placeMove(board, i, HUMAN);
+  assert.notEqual(next, null, `fixture move ${i} must be playable`);
+  return next;
+}
+
+test('restart resets a played board to the initial state', () => {
+  // X plays the centre, O answers — mid-game.
+  let board = newBoard();
+  board = clickCell(board, 4);
+  board = clickCell(board, bestMove(board));
+  assert.ok(board.some((cell) => cell !== EMPTY), 'fixture must be mid-game');
+
+  // Restart: `main.js` does exactly this in `onRestartClick`.
+  board = newBoard();
+
+  assert.deepEqual(board, newBoard());
+  assert.ok(board.every((cell) => cell === EMPTY), 'every cell must be empty after restart');
+});
+
+test('restart leaves the board fully playable again', () => {
+  // A finished game: X has the top row, O the middle.
+  const finished = ['X', 'X', 'X', 'O', 'O', '', '', '', ''];
+  assert.equal(winnerOf(finished), 'X');
+
+  const restarted = newBoard();
+
+  for (let i = 0; i < 9; i += 1) {
+    const board = placeMove(restarted, i, HUMAN);
+    assert.notEqual(board, null, `index ${i} should be playable after restart`);
+    assert.equal(board[i], HUMAN);
+  }
+  assert.deepEqual(restarted, newBoard(), 'restart must not mutate its input');
+});
+
+test('restart always yields a distinct, fresh board', () => {
+  const played = clickCell(clickCell(newBoard(), 0), 8);
+  assert.ok(played.some((cell) => cell !== EMPTY));
+
+  const restarted = newBoard();
+  assert.notEqual(restarted, played, 'restart must not alias the old board');
+  assert.notEqual(restarted, newBoard(), 'each restart must be a fresh array');
 });
 
 console.log(`\n${passed} tests passed`);

@@ -80,3 +80,27 @@ body {
 .cell--o {
   color: var(--o);
 }
+
+.restart {
+  padding: 10px 28px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.restart:hover {
+  background: var(--hover);
+  border-color: var(--line-hover);
+}
+
+.restart:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}

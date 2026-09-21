@@ -1,10 +1,12 @@
 /**
  * @file main.js — DOM wiring for tic-tac-toe.
  *
- * Implements F1 (board rendering), F2 (human move) and F3 (computer opponent):
- * the 3×3 grid shipped in `index.html` is kept in sync with the board held
- * here, clicking an empty cell places the human's `X`, and the computer then
- * answers with `O` on its own. Clicking an occupied cell does nothing.
+ * Implements F1 (board rendering), F2 (human move), F3 (computer opponent)
+ * and F5 (restart): the 3×3 grid shipped in `index.html` is kept in sync with
+ * the board held here, clicking an empty cell places the human's `X`, the
+ * computer then answers with `O` on its own, and the Restart button throws
+ * the current game away at any point — mid-game or after it has ended.
+ * Clicking an occupied cell does nothing.
  *
  * All rules live in `game.js`; this file only translates between DOM and state.
  */
@@ -19,6 +21,9 @@
 
   /** @type {HTMLElement[]} The nine cell elements, in board order (index 0..8). */
   const cells = Array.from(boardEl.querySelectorAll('.cell'));
+
+  /** The Restart button. */
+  const restartEl = document.getElementById('restart');
 
   /**
    * Build the accessible name for a cell.
@@ -97,7 +102,43 @@
     playComputerMove();
   }
 
+  /**
+   * Hide the result banner (F5).
+   *
+   * The text is emptied as well as hidden, so a stale announcement can never
+   * be re-read by a screen reader after the next game ends. The banner element
+   * itself belongs to F4; until it exists this is a silent no-op, so `main.js`
+   * keeps working whether or not F4 has been merged.
+   *
+   * @returns {void}
+   */
+  function hideBanner() {
+    const bannerEl = document.getElementById('banner');
+    if (!bannerEl) {
+      return;
+    }
+    bannerEl.textContent = '';
+    bannerEl.hidden = true;
+  }
+
+  /**
+   * Handle a click on Restart (F5): start a new game from scratch.
+   *
+   * Works mid-game and after a win or a draw, because the whole board is
+   * replaced rather than moves being undone one at a time: `newBoard()` hands
+   * back a fresh array, the cells are repainted from it and the result banner
+   * is cleared.
+   *
+   * @returns {void}
+   */
+  function onRestartClick() {
+    board = newBoard();
+    hideBanner();
+    render();
+  }
+
   cells.forEach((cell) => cell.addEventListener('click', onCellClick));
+  restartEl.addEventListener('click', onRestartClick);
 
   render();
 })();

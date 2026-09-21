@@ -1,20 +1,14 @@
 /**
  * @file main.js — DOM wiring for tic-tac-toe.
  *
- * Implements F1 (board rendering), F2 (human move), F3 (computer opponent)
-<<<<<<< HEAD
- * and F5 (restart): the 3×3 grid shipped in `index.html` is kept in sync with
- * the board held here, clicking an empty cell places the human's `X`, the
- * computer then answers with `O` on its own, and the Restart button throws
- * the current game away at any point — mid-game or after it has ended.
- * Clicking an occupied cell does nothing.
-=======
- * and F4 (win / draw detection): the 3×3 grid shipped in `index.html` is kept
- * in sync with the board held here, clicking an empty cell places the human's
- * `X`, the computer then answers with `O` on its own, and every move is
- * followed by a winner check. Once the game ends the result is announced in a
- * banner, the cells are disabled and further clicks are ignored.
->>>>>>> origin/main
+ * Implements F1 (board rendering), F2 (human move), F3 (computer opponent),
+ * F4 (win / draw detection) and F5 (restart): the 3×3 grid shipped in
+ * `index.html` is kept in sync with the board held here, clicking an empty
+ * cell places the human's `X`, the computer then answers with `O` on its own,
+ * and every move is followed by a winner check. Once the game ends the result
+ * is announced in a banner, the cells are disabled and further clicks are
+ * ignored. The Restart button throws the current game away at any point —
+ * mid-game or after it has ended. Clicking an occupied cell does nothing.
  *
  * All rules live in `game.js`; this file only translates between DOM and state.
  */

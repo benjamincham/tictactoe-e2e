@@ -1,20 +1,18 @@
 /**
  * @file main.js — DOM wiring for tic-tac-toe.
  *
- * Implements F1 (board rendering), F2 (human move) and F4 (win / draw
- * detection): the 3×3 grid shipped in `index.html` is kept in sync with the
- * board held here, clicking an empty cell places the human's `X`, and every
- * move is followed by a winner check. Once the game ends the result is
- * announced in a banner, the cells are disabled and further clicks are ignored.
+ * Implements F1 (board rendering), F2 (human move), F3 (computer opponent)
+ * and F4 (win / draw detection): the 3×3 grid shipped in `index.html` is kept
+ * in sync with the board held here, clicking an empty cell places the human's
+ * `X`, the computer then answers with `O` on its own, and every move is
+ * followed by a winner check. Once the game ends the result is announced in a
+ * banner, the cells are disabled and further clicks are ignored.
  *
  * All rules live in `game.js`; this file only translates between DOM and state.
  */
 
 (function () {
   'use strict';
-
-  /** The human player's mark. */
-  const HUMAN = 'X';
 
   /** @type {Board} Current game state. */
   let board = newBoard();
@@ -66,8 +64,8 @@
    * Run the bookkeeping that follows every move (F4).
    *
    * This is the single place the finished-game check happens, so the human's
-   * move and any later computer move (F3) share one path instead of each
-   * duplicating it. The banner is revealed before its text is written so the
+   * move and the computer's reply share one path instead of each duplicating
+   * it. The banner is revealed before its text is written so the
    * `role="status"` region is already exposed when the announcement lands.
    *
    * @returns {void}
@@ -79,13 +77,38 @@
       gameOver = true;
       bannerEl.hidden = false;
       bannerEl.textContent = result === 'draw' ? 'Draw!' : `${result} wins!`;
+      render();
     }
-
-    render();
   }
 
   /**
-   * Handle a click on a cell (F2): place `X` on empty cells only.
+   * Answer the human's move with the computer's `O` (F3).
+   *
+   * Called only once the human move has been applied and rendered, so `O`
+   * never appears before `X`. `bestMove` returns `null` when the board is full
+   * or already decided, which is the signal to stop replying.
+   *
+   * @returns {void}
+   */
+  function playComputerMove() {
+    const i = bestMove(board);
+    if (i === null) {
+      return;
+    }
+
+    const next = placeMove(board, i, COMPUTER);
+    if (next === null) {
+      return;
+    }
+
+    board = next;
+    render();
+    afterMove();
+  }
+
+  /**
+   * Handle a click on a cell: place the human's `X` (F2), check for a result,
+   * then let the computer reply (F3) — checked in turn (F4).
    *
    * Clicks are ignored once the game has ended, so a finished board can no
    * longer be changed (F4).
@@ -110,7 +133,12 @@
     }
 
     board = next;
+    render();
     afterMove();
+
+    if (!gameOver) {
+      playComputerMove();
+    }
   }
 
   cells.forEach((cell) => cell.addEventListener('click', onCellClick));

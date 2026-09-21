@@ -14,5 +14,4 @@
 - **Depends on**: T001
 - **Acceptance Criteria**:
   - [ ] board renders
-- **Verification**: `node test.js`
-- **Test**: renders 9 cells
+- **Notes**: whatever

@@ -2,11 +2,19 @@
  * @file main.js — DOM wiring for tic-tac-toe.
  *
  * Implements F1 (board rendering), F2 (human move), F3 (computer opponent)
+<<<<<<< HEAD
+ * and F5 (restart): the 3×3 grid shipped in `index.html` is kept in sync with
+ * the board held here, clicking an empty cell places the human's `X`, the
+ * computer then answers with `O` on its own, and the Restart button throws
+ * the current game away at any point — mid-game or after it has ended.
+ * Clicking an occupied cell does nothing.
+=======
  * and F4 (win / draw detection): the 3×3 grid shipped in `index.html` is kept
  * in sync with the board held here, clicking an empty cell places the human's
  * `X`, the computer then answers with `O` on its own, and every move is
  * followed by a winner check. Once the game ends the result is announced in a
  * banner, the cells are disabled and further clicks are ignored.
+>>>>>>> origin/main
  *
  * All rules live in `game.js`; this file only translates between DOM and state.
  */
@@ -27,6 +35,9 @@
 
   /** The result banner that announces a win or a draw. */
   const bannerEl = document.getElementById('banner');
+
+  /** The Restart button. */
+  const restartEl = document.getElementById('restart');
 
   /**
    * Build the accessible name for a cell.
@@ -141,7 +152,28 @@
     }
   }
 
+  /**
+   * Handle a click on Restart (F5): start a new game from scratch.
+   *
+   * Works mid-game and after a win or a draw, because the whole board is
+   * replaced rather than moves being undone one at a time: `newBoard()` hands
+   * back a fresh array, `gameOver` is cleared so cells accept input again, the
+   * cells are repainted from it and the result banner is cleared. The banner
+   * text is emptied as well as hidden, so a stale announcement can never be
+   * re-read by a screen reader after the next game ends.
+   *
+   * @returns {void}
+   */
+  function onRestartClick() {
+    board = newBoard();
+    gameOver = false;
+    bannerEl.hidden = true;
+    bannerEl.textContent = '';
+    render();
+  }
+
   cells.forEach((cell) => cell.addEventListener('click', onCellClick));
+  restartEl.addEventListener('click', onRestartClick);
 
   render();
 })();
